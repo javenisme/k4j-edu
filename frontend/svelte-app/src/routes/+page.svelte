@@ -256,7 +256,7 @@
 		<!-- Logo for non-logged in users -->
 		<div class="text-center mt-8">
 			<div class="mx-auto bg-[#e9ecef] p-4 rounded-lg" style="max-width: 400px;">
-				<h2 class="text-3xl font-bold text-[#2271b3]">LAMB</h2>
+				<h2 class="text-3xl font-bold text-[#2271b3]">K4J</h2>
 				<p class="text-[#195a91]">Learning Assistants Manager and Builder</p>
 			</div>
 		</div>

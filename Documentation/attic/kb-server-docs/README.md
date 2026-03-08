@@ -12,23 +12,25 @@ A dedicated knowledge base server designed to provide robust vector database fun
 
 - Python 3.11 or higher
 - pip (Python package manager)
-- recommended use of Conda or virtual environment 
+- recommended use of Conda or virtual environment
 
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/Lamb-Project/lamb-kb-server.git
 cd lamb-kb-server
 ```
 
 2. Install the required dependencies:
+
 ```bash
 cd backend
 pip install -r requirements.txt
 ```
 
-   > **Project Structure:** The repository consists of a `backend` directory that contains the server code. All commands should be run from the `backend` directory.
+> **Project Structure:** The repository consists of a `backend` directory that contains the server code. All commands should be run from the `backend` directory.
 
 3. Environment variables:
    - Copy `.env.example` to `.env`
@@ -42,13 +44,14 @@ cd backend
 python start.py
 ```
 
-The server will run on http://localhost:9090 by default. Edit start.py to change the port. 
+The server will run on http://localhost:9090 by default. Edit start.py to change the port.
 
 ## API Authentication
 
 All API calls require a Bearer token for authentication. The token must match the `LAMB_API_KEY` environment variable.
 
 Example request:
+
 ```bash
 curl -H 'Authorization: Bearer 0p3n-w3bu!' http://localhost:9090/
 ```
@@ -202,4 +205,3 @@ curl -X PATCH 'http://localhost:9090/files/1' \
   -H 'Content-Type: application/json' \
   -d '{"status": "completed"}'
 ```
-

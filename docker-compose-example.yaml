@@ -4,14 +4,13 @@ services:
     working_dir: ${LAMB_PROJECT_PATH}/open-webui/backend
     environment:
       - PORT=8080
-      - WEBUI_AUTH_TRUSTED_EMAIL_HEADER=X-User-Email
-      - WEBUI_AUTH_TRUSTED_NAME_HEADER=X-User-Name
       - PIP_DISABLE_PIP_VERSION_CHECK=1
       - PIP_CACHE_DIR=/root/.cache/pip
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
       - DEFAULT_USER_ROLE=user
       - GLOBAL_LOG_LEVEL=WARNING
+      - WEBUI_NAME=K4J Edu
     volumes:
       - ${LAMB_PROJECT_PATH}:${LAMB_PROJECT_PATH}
       - pip-cache:/root/.cache/pip

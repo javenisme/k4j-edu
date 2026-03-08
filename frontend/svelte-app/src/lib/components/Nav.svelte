@@ -79,7 +79,7 @@
             <!-- Image path updated to be relative to static dir -->
             <img src="{base}/img/lamb_1.png" alt="LAMB Logo" class="h-14">
             <div class="text-lg font-bold">
-              <a href="{base}/">{localeLoaded ? $_('app.logoText', { default: 'LAMB' }) : 'LAMB'}</a> 
+              <a href="{base}/">{localeLoaded ? $_('app.logoText', { default: 'K4J' }) : 'K4J'}</a> 
               <span class="text-xs bg-gray-200 px-1 py-0.5 rounded" title="Version: {VERSION_INFO.version}, Commit: {VERSION_INFO.commit}, Branch: {VERSION_INFO.branch}">{versionDisplay}</span>
             </div>
           </div>
