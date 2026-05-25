@@ -41,7 +41,9 @@ RUN mkdir -p /etc/nginx/templates && printf 'server {\n\
     }\n\
 }\n' > /etc/nginx/templates/default.conf.template
 
-# Entrypoint: substitute env vars in config.js, then start nginx
-CMD ["sh", "-c", "envsubst < /usr/share/nginx/html/config.js.template > /usr/share/nginx/html/config.js && nginx -g 'daemon off;'"]
+# nginx's entrypoint only processes /etc/nginx/templates when the CMD starts with
+# "nginx", so do the substitution ourselves: render the listen-$PORT server block
+# (Railway injects $PORT; default 8080) and the runtime config.js, then exec nginx.
+CMD ["sh", "-c", "export PORT=${PORT:-8080}; envsubst '$PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf; envsubst < /usr/share/nginx/html/config.js.template > /usr/share/nginx/html/config.js; exec nginx -g 'daemon off;'"]
 
-EXPOSE 80
+EXPOSE 8080
