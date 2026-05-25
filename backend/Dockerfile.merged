@@ -6,7 +6,11 @@
 #
 # Build context is backend/ (same as backend/Dockerfile), so every COPY source
 # below is relative to backend/.
-FROM ghcr.io/open-webui/open-webui:v0.8.10
+# Pin OWI v0.5.6: the LAMB backend's OwiDatabaseManager reads OWI's webui.db with
+# a hardcoded 12-column user schema (open-webui/ vendored source is 0.5.6). Newer
+# OWI (e.g. v0.8.10) has a 22-column user table -> "Row length 22 != 12" and the
+# bridge can't read users. v0.5.6 matches the backend's expected schema.
+FROM ghcr.io/open-webui/open-webui:v0.5.6
 
 # Caddy reverse proxy — take the glibc binary from the debian-based caddy image.
 COPY --from=caddy:2 /usr/bin/caddy /usr/bin/caddy
