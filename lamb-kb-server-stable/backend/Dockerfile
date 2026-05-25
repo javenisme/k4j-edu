@@ -16,11 +16,15 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application code
 COPY . .
 
+# main.py mounts StaticFiles(directory="static") at import time; the dir is
+# gitignored so create it here, otherwise startup crashes with RuntimeError.
+RUN mkdir -p static data
+
 # Create non-root user
 RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
 USER appuser
 
-EXPOSE 9099
+EXPOSE 9090
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9099", "--forwarded-allow-ips", "*"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9090", "--forwarded-allow-ips", "*"]

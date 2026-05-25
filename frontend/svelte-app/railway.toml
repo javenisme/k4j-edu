@@ -1,0 +1,11 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "frontend/svelte-app/Dockerfile"
+
+[deploy]
+# No startCommand: the Dockerfile CMD runs envsubst on config.js then starts nginx.
+# Overriding it here would skip the runtime config.js substitution.
+healthcheckPath = "/"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
