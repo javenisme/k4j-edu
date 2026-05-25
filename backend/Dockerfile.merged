@@ -22,7 +22,13 @@ RUN chmod +x /tmp/patch-openwebui.sh && /tmp/patch-openwebui.sh
 # LAMB backend in an isolated venv so its deps don't collide with OWI's.
 RUN python3 -m venv /lamb/venv
 COPY requirements.txt /lamb/requirements.txt
+# Install CPU-only torch FIRST. The default torch==2.3.1 wheel bundles ~5GB of
+# nvidia-cuda-* libraries that are dead weight on Railway (no GPU) and blew up the
+# image past the registry publish limit. 2.3.1+cpu satisfies the pinned ==2.3.1
+# in requirements, so torch (and its CUDA deps) are then skipped.
 RUN /lamb/venv/bin/pip install --no-cache-dir --upgrade pip \
+    && /lamb/venv/bin/pip install --no-cache-dir torch==2.3.1+cpu \
+        --index-url https://download.pytorch.org/whl/cpu \
     && /lamb/venv/bin/pip install --no-cache-dir -r /lamb/requirements.txt
 COPY . /lamb/backend
 
