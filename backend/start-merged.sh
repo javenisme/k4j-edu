@@ -4,7 +4,14 @@
 # shared volume (Railway volumes cannot be shared across services).
 set -m
 
-echo "[merged] starting Open WebUI on :8080 (DATA_DIR=${DATA_DIR:-/opt/lamb/owi-data})"
+# The volume mounts empty at /opt/lamb and sqlite won't create missing parent
+# directories, so create the data dirs at runtime (build-time mkdir is hidden by
+# the volume mount). OWI's webui.db lives in DATA_DIR; LAMB's db in LAMB_DB_PATH.
+DATA_DIR="${DATA_DIR:-/opt/lamb/owi-data}"
+export DATA_DIR
+mkdir -p "$DATA_DIR" "${LAMB_DB_PATH:-/opt/lamb}"
+
+echo "[merged] starting Open WebUI on :8080 (DATA_DIR=$DATA_DIR)"
 # Scope PORT=8080 to OWI only; Caddy keeps Railway's $PORT.
 ( cd /app/backend && PORT=8080 HOST=0.0.0.0 bash start.sh ) &
 OWI_PID=$!
