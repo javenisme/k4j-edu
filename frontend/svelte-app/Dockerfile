@@ -21,8 +21,9 @@ FROM nginx:alpine
 # Install envsubst (gettext) for runtime config
 RUN apk add --no-cache gettext
 
-# Copy built files from builder
-COPY --from=builder /app/build /usr/share/nginx/html
+# Copy built files from builder.
+# svelte.config.js (adapter-static) outputs to ../build, i.e. /build in the container.
+COPY --from=builder /build /usr/share/nginx/html
 
 # Copy config template
 COPY --from=builder /app/static/config.js /usr/share/nginx/html/config.js.template
