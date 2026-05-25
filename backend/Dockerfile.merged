@@ -1,0 +1,35 @@
+# Merged image: Open WebUI + LAMB backend + Caddy in one container.
+#
+# Why: the LAMB backend reads OWI's webui.db directly from the filesystem
+# (OwiDatabaseManager), and Railway volumes cannot be shared between services.
+# Running both apps in one container lets them share one volume / one webui.db.
+#
+# Build context is backend/ (same as backend/Dockerfile), so every COPY source
+# below is relative to backend/.
+FROM ghcr.io/open-webui/open-webui:v0.8.10
+
+# Caddy reverse proxy — take the glibc binary from the debian-based caddy image.
+COPY --from=caddy:2 /usr/bin/caddy /usr/bin/caddy
+
+# Build tools for any LAMB backend deps that compile (e.g. chroma-hnswlib).
+RUN apt-get update && apt-get install -y --no-install-recommends gcc curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Patch OWI branding (same script the standalone owi service used).
+COPY deploy/patch-openwebui.sh /tmp/patch-openwebui.sh
+RUN chmod +x /tmp/patch-openwebui.sh && /tmp/patch-openwebui.sh
+
+# LAMB backend in an isolated venv so its deps don't collide with OWI's.
+RUN python3 -m venv /lamb/venv
+COPY requirements.txt /lamb/requirements.txt
+RUN /lamb/venv/bin/pip install --no-cache-dir --upgrade pip \
+    && /lamb/venv/bin/pip install --no-cache-dir -r /lamb/requirements.txt
+COPY . /lamb/backend
+
+# Reverse-proxy config + process supervisor entrypoint.
+COPY Caddyfile /lamb/Caddyfile
+COPY start-merged.sh /lamb/start-merged.sh
+RUN chmod +x /lamb/start-merged.sh
+
+# Caddy binds Railway's $PORT; OWI runs on 8080, backend on 9099 (internal).
+CMD ["bash", "/lamb/start-merged.sh"]

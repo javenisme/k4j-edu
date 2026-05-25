@@ -1,0 +1,20 @@
+# Reverse proxy for the merged backend+OWI service.
+# Railway terminates TLS at the edge and forwards plain HTTP to $PORT, so Caddy
+# listens on :$PORT with auto_https off and routes by Host header:
+#   - the OWI public domain  -> Open WebUI (localhost:8080)
+#   - everything else (api domain, Railway healthcheck) -> LAMB backend (localhost:9099)
+{
+	admin off
+	auto_https off
+}
+
+:{$PORT} {
+	@owi host k4j-edu-owi.up.railway.app
+	handle @owi {
+		reverse_proxy localhost:8080
+	}
+
+	handle {
+		reverse_proxy localhost:9099
+	}
+}

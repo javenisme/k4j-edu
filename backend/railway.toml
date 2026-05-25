@@ -1,13 +1,14 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "backend/Dockerfile"
+dockerfilePath = "backend/Dockerfile.merged"
 
 [deploy]
-# Wrap in `sh -c` so $PORT is shell-expanded — Railway execs the start command
-# directly (no shell), so a bare `--port $PORT` passes the literal string "$PORT".
-startCommand = "sh -c \"uvicorn main:app --host 0.0.0.0 --port $PORT --forwarded-allow-ips '*'\""
-# "/" returns 404 in this container (no ../frontend/build present); /docs returns 200.
+# The merged image runs Caddy + OWI + backend via the Dockerfile CMD
+# (start-merged.sh), so do NOT set a startCommand (it would replace the CMD and
+# only launch the backend). Caddy routes the healthcheck to the backend; /docs -> 200.
 healthcheckPath = "/docs"
-healthcheckTimeout = 60
+# Generous timeout: the container also boots OWI (loads an embedding model) and the
+# backend waits for OWI to create webui.db on the shared volume before it serves.
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
