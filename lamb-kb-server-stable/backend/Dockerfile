@@ -16,6 +16,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application code
 COPY . .
 
+# main.py mounts StaticFiles(directory="static") at import time; the dir is
+# gitignored so create it here, otherwise startup crashes with RuntimeError.
+RUN mkdir -p static data
+
 # Create non-root user
 RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
