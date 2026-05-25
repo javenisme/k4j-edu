@@ -11,7 +11,7 @@
 :{$PORT} {
 	@owi host k4j-edu-owi.up.railway.app
 	handle @owi {
-		reverse_proxy localhost:8080
+		reverse_proxy localhost:8081
 	}
 
 	handle {

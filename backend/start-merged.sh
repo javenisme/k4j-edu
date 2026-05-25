@@ -11,12 +11,18 @@ DATA_DIR="${DATA_DIR:-/opt/lamb/owi-data}"
 export DATA_DIR
 mkdir -p "$DATA_DIR" "${LAMB_DB_PATH:-/opt/lamb}"
 
-echo "[merged] starting Open WebUI on :8080 (DATA_DIR=$DATA_DIR)"
-# Scope PORT=8080 to OWI only; Caddy keeps Railway's $PORT.
-( cd /app/backend && PORT=8080 HOST=0.0.0.0 bash start.sh ) &
+# Railway's $PORT is 8080 and Caddy binds it, so OWI must use a different port.
+# Override OWI_BASE_URL here so the backend reaches OWI directly (not Caddy),
+# regardless of what's configured in the service env.
+OWI_INTERNAL_PORT=8081
+export OWI_BASE_URL="http://localhost:${OWI_INTERNAL_PORT}"
+
+echo "[merged] starting Open WebUI on :${OWI_INTERNAL_PORT} (DATA_DIR=$DATA_DIR)"
+# Scope PORT to OWI only; Caddy keeps Railway's $PORT.
+( cd /app/backend && PORT=$OWI_INTERNAL_PORT HOST=0.0.0.0 bash start.sh ) &
 OWI_PID=$!
 
-echo "[merged] starting LAMB backend on :9099"
+echo "[merged] starting LAMB backend on :9099 (OWI_BASE_URL=$OWI_BASE_URL)"
 # The backend blocks at startup until OWI creates webui.db on the shared volume,
 # then continues — so parallel start is fine.
 ( cd /lamb/backend && /lamb/venv/bin/uvicorn main:app --host 0.0.0.0 --port 9099 --forwarded-allow-ips '*' ) &
