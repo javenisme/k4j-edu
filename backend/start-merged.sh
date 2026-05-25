@@ -22,6 +22,19 @@ echo "[merged] starting Open WebUI on :${OWI_INTERNAL_PORT} (DATA_DIR=$DATA_DIR)
 ( cd /app/backend && PORT=$OWI_INTERNAL_PORT HOST=0.0.0.0 bash start.sh ) &
 OWI_PID=$!
 
+# Wait for OWI to accept connections before starting the backend: the backend
+# calls OWI's API at startup (admin-user creation) and would otherwise race ahead
+# while OWI is still running migrations / loading its embedding model.
+echo "[merged] waiting for OWI on :${OWI_INTERNAL_PORT} before starting backend..."
+for _ in $(seq 1 150); do
+  if (exec 3<>"/dev/tcp/127.0.0.1/${OWI_INTERNAL_PORT}") 2>/dev/null; then
+    exec 3>&- 2>/dev/null
+    echo "[merged] OWI is accepting connections"
+    break
+  fi
+  sleep 2
+done
+
 echo "[merged] starting LAMB backend on :9099 (OWI_BASE_URL=$OWI_BASE_URL)"
 # The backend blocks at startup until OWI creates webui.db on the shared volume,
 # then continues — so parallel start is fine.
