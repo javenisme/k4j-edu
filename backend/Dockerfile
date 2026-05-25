@@ -16,10 +16,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application code
 COPY . .
 
-# Create non-root user
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
-USER appuser
+# Run as root so the app can write to the Railway volume mounted at LAMB_DB_PATH
+# (/opt/lamb). Railway mounts volumes owned by root, so a non-root USER would hit
+# PermissionError creating the SQLite DB there.
 
 EXPOSE 9099
 
