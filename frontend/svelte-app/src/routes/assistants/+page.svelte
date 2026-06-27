@@ -7,6 +7,7 @@
     import { _, locale } from '$lib/i18n';
     import { user } from '$lib/stores/userStore';
     import ConfirmationModal from '$lib/components/modals/ConfirmationModal.svelte'; // Generic confirmation modal
+    import NotificationModal from '$lib/components/modals/NotificationModal.svelte';
     import { onMount, onDestroy } from 'svelte';
     import { page } from '$app/stores'; // Import page store to read URL params
     import { getAssistantById, createAssistant, deleteAssistant, setAssistantPublishStatus } from '$lib/services/assistantService'; // Import service
@@ -147,6 +148,20 @@
     // --- Publish State ---
     let isPublishing = $state(false);
     let publishError = $state('');
+
+    // --- Notification Modal State ---
+    /** @type {{ isOpen: boolean, title: string, message: string, variant: 'success' | 'error' | 'info' }} */
+    let notification = $state({ isOpen: false, title: '', message: '', variant: 'success' });
+
+    /**
+     * Show a notification modal (replaces alert() calls)
+     * @param {'success' | 'error' | 'info'} variant
+     * @param {string} title
+     * @param {string} message
+     */
+    function showNotification(variant, title, message) {
+        notification = { isOpen: true, title, message, variant };
+    }
 
     // --- Knowledge Base State (for detail view) ---
     /** @type {import('$lib/services/knowledgeBaseService').KnowledgeBase[]} */
@@ -436,35 +451,32 @@
 
     // Effect to handle programmatic navigation to detail view (e.g., after creation)
     /**
-     * Handles the custom event dispatched when an assistant is successfully created.
+     * Handles successful assistant creation.
      * Navigates to the list view.
-     * @param {CustomEvent<{ assistantId: number }>} event - The custom event containing the new assistant's ID.
+     * @param {{ assistantId: number }} detail
      */
-    function handleAssistantCreated(event) {
-        // Add check for event.detail
-        if (event.detail && typeof event.detail.assistantId === 'number') {
-            const newAssistantId = event.detail.assistantId;
-            console.log(`Assistant created with ID: ${newAssistantId}, navigating to list view.`);
-            // Navigate to assistants base path without query params
-            goto(`${base}/assistants`, { replaceState: true });
-        } else {
-            console.error('handleAssistantCreated received event without expected detail:', event);
-            // Optionally show an error message to the user or navigate to list view
-            detailError = 'Failed to navigate to new assistant. Event detail missing.'; 
-            showList(); // Go back to list as a fallback
-        }
+    function handleAssistantCreated({ assistantId }) {
+    if (typeof assistantId === 'number') {
+      const newAssistantId = assistantId;
+      console.log(`Assistant created with ID: ${newAssistantId}, navigating to list view.`);
+      goto(`${base}/assistants`, { replaceState: true });
+    } else {
+      console.error('handleAssistantCreated received invalid details');
+      detailError = 'Failed to navigate to new assistant. Event detail missing.'; 
+      showList();
     }
+  }
 
     /**
-     * Handles the custom event dispatched when an assistant is successfully updated.
+     * Handles successful assistant update.
      * Navigates back to the list view.
-     * @param {CustomEvent<{ assistantId: number }>} event - The custom event containing the updated assistant's ID.
+     * @param {{ assistantId: number }} detail
      */
-    function handleAssistantUpdated(event) {
-        const updatedAssistantId = event.detail.assistantId;
-        console.log(`Assistant updated with ID: ${updatedAssistantId}, navigating back to list view.`);
-        showList(); 
-    }
+    function handleAssistantUpdated({ assistantId }) {
+    const updatedAssistantId = assistantId;
+    console.log(`Assistant updated with ID: ${updatedAssistantId}, navigating back to list view.`);
+    showList(); 
+  }
 
 
 
@@ -481,7 +493,7 @@
         console.log(`Delete request received for ID: ${id}, Name: ${name}, Published: ${published}`);
 
         if (published) {
-            alert(currentLocale ? $_('assistants.deleteErrorPublished') : 'Cannot delete a published assistant. Please unpublish it first.');
+            showNotification('info', 'Cannot Delete Published Assistant', currentLocale ? $_('assistants.deleteErrorPublished') : 'Cannot delete a published assistant. Please unpublish it first.');
             return;
         }
 
@@ -629,7 +641,7 @@
 
         } catch (error) {
             console.error('Error during assistant export:', error);
-            alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            showNotification('error', 'Export Failed', error instanceof Error ? error.message : 'Unknown error');
         } finally {
             isExporting = false;
             exportingId = null;
@@ -673,8 +685,7 @@
         } catch (error) {
             console.error('Error toggling publish status:', error);
             publishError = error instanceof Error ? error.message : 'Failed to update publish status.';
-            // Display error to user (e.g., alert or inline message)
-            alert(`Error: ${publishError}`); 
+            showNotification('error', 'Error', publishError);
         } finally {
             isPublishing = false;
         }
@@ -958,7 +969,7 @@
     </div>
 {:else if currentView === 'create'}
     <!-- Pass null to indicate creation mode -->
-    <AssistantForm assistant={null} on:formSuccess={handleAssistantCreated} />
+    <AssistantForm assistant={null} onFormSuccess={handleAssistantCreated} />
 {:else if currentView === 'detail'}
     <!-- Detail View Sub-Tabs -->
     <div class="mb-4 border-b border-gray-300 flex space-x-4">
@@ -1449,16 +1460,15 @@
                 <div class="w-full">
                     <AssistantForm 
                         assistant={selectedAssistantData}
-                        on:formSuccess={() => {
+                        onFormSuccess={() => {
                             // Refresh the assistant data after successful update with forceRefresh
                             fetchAssistantDetail(selectedAssistantData.id, true);
                             detailSubView = 'properties'; // Switch back to properties view
                         }}
-                        on:cancel={() => {
+                        onCancel={() => {
                             // Switch back to properties view when user cancels
                             detailSubView = 'properties';
                         }}
-                        id="assistant-edit-form"
                     />
                 </div>
             </div>
@@ -1608,6 +1618,15 @@
         assistantToDeleteName = null;
         deleteError = ''; // Clear errors on close
     }}
+/>
+
+<!-- Notification Modal (replaces browser alert() dialogs) -->
+<NotificationModal
+    bind:isOpen={notification.isOpen}
+    title={notification.title}
+    message={notification.message}
+    variant={notification.variant}
+    onclose={() => { notification.isOpen = false; }}
 />
 
 <!-- Loading state for detail view -->

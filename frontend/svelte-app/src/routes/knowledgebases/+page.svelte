@@ -82,7 +82,7 @@
                         <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
                     </svg>
                 </button>
-                <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate sm:leading-10">
                     {$_('knowledgeBases.detailTitle', { default: 'Knowledge Base Details' })}
                 </h1>
             </div>
@@ -90,7 +90,7 @@
                 {$_('knowledgeBases.detailDescription', { default: 'View details and manage files for this knowledge base.' })}
             </p>
         {:else}
-            <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+            <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl sm:truncate sm:leading-10">
                 {$_('knowledgeBases.pageTitle', { default: 'Knowledge Bases' })}
             </h1>
             <p class="mt-1 text-sm text-gray-500">

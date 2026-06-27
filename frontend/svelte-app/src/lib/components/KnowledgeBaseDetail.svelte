@@ -7,6 +7,7 @@
     import { getApiUrl } from '$lib/config'; // Import getApiUrl
     import { browser } from '$app/environment'; // Import browser
     import ConfirmationModal from '$lib/components/modals/ConfirmationModal.svelte';
+    import NotificationModal from '$lib/components/modals/NotificationModal.svelte';
     
     /** 
      * @typedef {import('$lib/services/knowledgeBaseService').IngestionPlugin} IngestionPlugin
@@ -250,6 +251,20 @@
     /** @type {number|null} */
     let cancelJobTarget = $state(null);
     let isCancellingJob = $state(false);
+
+    // --- Notification Modal State ---
+    /** @type {{ isOpen: boolean, title: string, message: string, variant: 'success' | 'error' | 'info' }} */
+    let notification = $state({ isOpen: false, title: '', message: '', variant: 'success' });
+
+    /**
+     * Show a notification modal (replaces alert() calls)
+     * @param {'success' | 'error' | 'info'} variant
+     * @param {string} title
+     * @param {string} message
+     */
+    function showNotification(variant, title, message) {
+        notification = { isOpen: true, title, message, variant };
+    }
     
     // Polling configuration
     let pollingRefreshRate = $state(3000); // Default 3 seconds, will be fetched from backend
@@ -494,7 +509,7 @@
             closeJobModal();
         } catch (/** @type {unknown} */ err) {
             console.error('Error retrying job:', err);
-            alert(err instanceof Error ? err.message : 'Failed to retry job');
+            showNotification('error', 'Error', err instanceof Error ? err.message : 'Failed to retry job');
         } finally {
             jobActionLoading = false;
         }
@@ -711,6 +726,23 @@
     }
     
     /**
+     * Resets plugin parameters to their default values
+     */
+    function resetPluginParams() {
+        if (selectedPlugin && selectedPlugin.parameters) {
+            /** @type {Record<string, any>} */
+            const newParams = {};
+            for (const paramName in selectedPlugin.parameters) {
+                if (paramName.startsWith('_')) continue; // Skip info-only params
+                newParams[paramName] = selectedPlugin.parameters[paramName].default;
+            }
+            pluginParams = newParams;
+        } else {
+            pluginParams = {};
+        }
+    }
+
+    /**
      * Selects a plugin and initializes its parameters
      * @param {number} index - The index of the plugin to select
      */
@@ -720,14 +752,7 @@
             selectedPlugin = plugins[index];
             advancedMode = false;
             
-            pluginParams = {};
-            if (selectedPlugin && selectedPlugin.parameters) {
-                // Iterate over the parameters object
-                for (const paramName in selectedPlugin.parameters) {
-                    if (paramName.startsWith('_')) continue; // Skip info-only params
-                    pluginParams[paramName] = selectedPlugin.parameters[paramName].default;
-                }
-            }
+            resetPluginParams();
             console.log('Selected plugin:', selectedPlugin?.name, 'with params:', pluginParams);
         }
     }
@@ -765,6 +790,11 @@
                 pluginParams[paramName] = input.value ? Number(input.value) : paramDef.default;
             } else if (paramDef.type === 'boolean') {
                 pluginParams[paramName] = input.checked;
+            } else if (paramDef.type === 'array') {
+                // Split textarea value by newlines to create an array
+                pluginParams[paramName] = input.value
+                    ? input.value.split('\n').map(s => s.trim()).filter(s => s !== '')
+                    : [];
             } else {
                 pluginParams[paramName] = input.value;
             }
@@ -885,6 +915,7 @@
             uploadSuccess = true;
             selectedFile = null;
             resetFileInput();
+            resetPluginParams();
             // Reload the KB details to show the new file in the list
             await loadKnowledgeBase(kbId);
             // Optionally hide the ingestion box after success
@@ -919,6 +950,7 @@
             const result = await runBaseIngestionPlugin(kbId, selectedPlugin.name, pluginParams);
             console.log('Base ingestion result:', result);
             uploadSuccess = true;
+            resetPluginParams();
             await loadKnowledgeBase(kbId);
         } catch (err) {
             console.error('Error running base ingestion:', err);
@@ -1201,7 +1233,7 @@
                                     <table class="min-w-full divide-y divide-gray-200">
                                         <thead class="bg-gray-50">
                                             <tr>
-                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-[20rem]">
                                                     {$_('knowledgeBases.detail.fileNameColumn', { default: 'File Name' })}
                                                 </th>
                                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1223,21 +1255,22 @@
                                                 {@const job = getJobForFile(file.filename)}
                                                 {@const statusColors = job ? getStatusColors(job.status) : getStatusColors('unknown')}
                                                 <tr>
-                                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                    <td class="px-6 py-4 max-w-[20rem]">
                                                         <div class="flex items-center">
-                                                            <div class="text-sm font-medium text-gray-900">
+                                                            <div class="text-sm font-medium text-gray-900 truncate" title={file.filename}>
                                                                 {#if file.file_url}
                                                                     <a 
                                                                         href={file.file_url} 
                                                                         target="_blank" 
                                                                         rel="noopener noreferrer"
-                                                                        class="text-[#2271b3] hover:text-[#195a91] hover:underline"
+                                                                        class="text-[#2271b3] hover:text-[#195a91] hover:underline truncate block"
                                                                         style="color: #2271b3;"
+                                                                        title={file.filename}
                                                                     >
                                                                         {file.filename}
                                                                     </a>
                                                                 {:else}
-                                                                    <span>{file.filename}</span>
+                                                                    <span class="truncate block">{file.filename}</span>
                                                                 {/if}
                                                             </div>
                                                         </div>
@@ -2152,4 +2185,13 @@
     variant="warning"
     onconfirm={confirmCancelJob}
     oncancel={cancelCancelJobModal}
+/>
+
+<!-- Notification Modal (replaces browser alert() dialogs) -->
+<NotificationModal
+    bind:isOpen={notification.isOpen}
+    title={notification.title}
+    message={notification.message}
+    variant={notification.variant}
+    onclose={() => { notification.isOpen = false; }}
 />
