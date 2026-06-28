@@ -163,6 +163,9 @@ open-webui/open_webui/data/*
 open-webui/.webui_secret_key
 lamb-kb-server-stable/backend/data/chromadb/
 static/
+!frontend/svelte-app/static/
+!frontend/svelte-app/static/img/
+!frontend/svelte-app/static/img/logo-website-k4j.png
 data/
 Documentation/test-scripts/package-lock.json
 testing/package-lock.json

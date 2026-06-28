@@ -14,6 +14,7 @@
 	let processingToken = $state(false);
 	let processedToken = $state(/** @type {string | null} */ (null));
 	let sessionError = $state(/** @type {string | null} */ (null));
+	let isPortalHome = $derived($page.url.pathname === `${base}/` || $page.url.pathname === base);
 
 	/** @param {URL} url */
 	async function handleTokenLogin(url) {
@@ -64,10 +65,12 @@
 </script>
 
 <div class="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
-	<Nav />
-	<GlobalAacTabBar />
+	{#if !isPortalHome}
+		<Nav />
+		<GlobalAacTabBar />
+	{/if}
 
-	<main class="w-full mx-auto py-6 sm:px-6 lg:px-8 flex-grow">
+	<main class={isPortalHome ? 'w-full flex-grow' : 'w-full mx-auto py-6 sm:px-6 lg:px-8 flex-grow'}>
 		{#if sessionError}
 			<div class="max-w-md mx-auto mt-12 bg-red-50 border border-red-200 rounded-lg p-6 text-center">
 				<h2 class="text-lg font-semibold text-red-800">Unable to start session</h2>
@@ -81,5 +84,7 @@
 		{/if}
 	</main>
 
-	<Footer />
+	{#if !isPortalHome}
+		<Footer />
+	{/if}
 </div>
