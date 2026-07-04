@@ -9,6 +9,7 @@
 	import { _, locale } from '$lib/i18n';
 	import { apiFetch } from '$lib/services/apiClient';
 	import { getMyProfile } from '$lib/services/adminService';
+	import { clearCurrentSession } from '$lib/session/sessionManager';
 	import { renderMarkdownSafe } from '$lib/utils/sanitize';
 
 	let isMounted = true;
@@ -241,6 +242,13 @@
 	function showSignup() {
 		authMode = 'signup';
 	}
+
+	function logout() {
+		clearCurrentSession();
+		if (browser) {
+			window.location.href = base + '/';
+		}
+	}
 </script>
 
 <svelte:head>
@@ -254,6 +262,39 @@
 <div class="k4j-portal">
 	<div class="grid-bg"></div>
 	<div class="star-field"></div>
+
+	<nav class="seminary-nav" aria-label="K4J Seminary sections">
+		<a href="{base}/" class="seminary-logo">
+			<img src="{base}/img/logo-website-k4j.png" alt="Kingdom for Jesus · 末世先鋒" />
+			<span class="logo-divider"></span>
+			<span>
+				<strong>SEMINARY</strong>
+				<small>神學院</small>
+			</span>
+		</a>
+		<div class="seminary-links">
+			{#if $user.isLoggedIn}
+				<a href="{base}/assistants">Assistants</a>
+				<a href="{base}/knowledgebases">Knowledge Bases</a>
+				<a href="{base}/agent">Agent Studio</a>
+				<a href="{base}/libraries">Libraries</a>
+			{:else}
+				<a href="#vision">異象</a>
+				<a href="#pioneer">先鋒</a>
+				<a href="#curriculum">課程</a>
+				<a href="#technology">科技</a>
+				<a href="#join">加入</a>
+			{/if}
+		</div>
+		<div class="seminary-actions">
+			{#if $user.isLoggedIn}
+				<span class="seminary-user">{$user.name || $user.email || 'K4J User'}</span>
+				<button type="button" class="seminary-cta" onclick={logout}>登出</button>
+			{:else}
+				<button type="button" class="seminary-cta" onclick={showSignup}>立即申請</button>
+			{/if}
+		</div>
+	</nav>
 
 	{#if $user.isLoggedIn}
 		<section class="portal-section authed-hero">
@@ -341,25 +382,6 @@
 			</div>
 		</section>
 	{:else}
-		<nav class="seminary-nav" aria-label="K4J Seminary sections">
-			<a href="#top" class="seminary-logo">
-				<img src="{base}/img/logo-website-k4j.png" alt="Kingdom for Jesus · 末世先鋒" />
-				<span class="logo-divider"></span>
-				<span>
-					<strong>SEMINARY</strong>
-					<small>神學院</small>
-				</span>
-			</a>
-			<div class="seminary-links">
-				<a href="#vision">異象</a>
-				<a href="#pioneer">先鋒</a>
-				<a href="#curriculum">課程</a>
-				<a href="#technology">科技</a>
-				<a href="#join">加入</a>
-			</div>
-			<button type="button" class="seminary-cta" onclick={showSignup}>立即申請</button>
-		</nav>
-
 		<section class="portal-section hero">
 			<div class="glow one"></div>
 			<div class="glow two"></div>
@@ -578,6 +600,24 @@
 			</div>
 		</section>
 	{/if}
+
+	<footer class="seminary-footer">
+		<div class="portal-shell footer-inner">
+			<a href="{base}/" class="footer-brand">
+				<img src="{base}/img/logo-website-k4j.png" alt="Kingdom for Jesus" />
+				<span>Kingdom for Jesus · K4J Seminary</span>
+			</a>
+			<div class="footer-meta">
+				<span>末世先鋒神學院</span>
+				<span>Powered by LAMB</span>
+			</div>
+			<div class="footer-links">
+				<a href="{base}/assistants">Assistants</a>
+				<a href="{base}/knowledgebases">Knowledge Bases</a>
+				<a href="{base}/agent">Agent Studio</a>
+			</div>
+		</div>
+	</footer>
 </div>
 
 <style>
@@ -712,6 +752,22 @@
 
 	.seminary-links a:hover {
 		color: var(--gold);
+	}
+
+	.seminary-actions {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+	}
+
+	.seminary-user {
+		max-width: 180px;
+		overflow: hidden;
+		color: var(--muted);
+		font-size: 13px;
+		font-weight: 700;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.seminary-cta {
@@ -1425,15 +1481,87 @@
 		color: var(--gold);
 	}
 
+	.seminary-footer {
+		position: relative;
+		z-index: 1;
+		border-top: 1px solid rgba(212, 175, 55, 0.22);
+		background: rgba(7, 17, 31, 0.9);
+		padding: 28px clamp(18px, 5vw, 64px);
+	}
+
+	.footer-inner {
+		display: grid;
+		grid-template-columns: minmax(220px, 1.2fr) minmax(180px, auto) minmax(260px, 1fr);
+		gap: 24px;
+		align-items: center;
+	}
+
+	.footer-brand {
+		display: inline-flex;
+		align-items: center;
+		gap: 14px;
+		color: var(--gold);
+		font-family: Georgia, 'Times New Roman', serif;
+		font-size: 13px;
+		font-weight: 800;
+		letter-spacing: 0.08em;
+		text-decoration: none;
+	}
+
+	.footer-brand img {
+		width: 126px;
+		height: auto;
+		filter: brightness(0) saturate(100%) invert(74%) sepia(58%) saturate(415%) hue-rotate(2deg)
+			brightness(91%) contrast(91%);
+	}
+
+	.footer-meta {
+		display: grid;
+		gap: 6px;
+		color: var(--dim);
+		font-size: 12px;
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-align: center;
+		text-transform: uppercase;
+	}
+
+	.footer-links {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 16px;
+	}
+
+	.footer-links a {
+		color: var(--muted);
+		font-size: 13px;
+		font-weight: 700;
+		text-decoration: none;
+	}
+
+	.footer-links a:hover {
+		color: var(--gold);
+	}
+
 	@media (max-width: 980px) {
 		.public-layout,
 		.authed-heading,
-		.overview-grid {
+		.overview-grid,
+		.footer-inner {
 			grid-template-columns: 1fr;
 		}
 
 		.seminary-links {
 			display: none;
+		}
+
+		.footer-meta {
+			text-align: left;
+		}
+
+		.footer-links {
+			justify-content: flex-start;
 		}
 
 		.auth-panel {
@@ -1454,10 +1582,25 @@
 		.seminary-nav {
 			position: relative;
 			align-items: flex-start;
+			flex-wrap: wrap;
 		}
 
 		.seminary-logo img {
 			width: 128px;
+		}
+
+		.seminary-actions {
+			width: 100%;
+			justify-content: space-between;
+		}
+
+		.seminary-user {
+			max-width: min(260px, 52vw);
+		}
+
+		.footer-brand {
+			align-items: flex-start;
+			flex-direction: column;
 		}
 
 		.hero-actions,
