@@ -3,7 +3,6 @@
 	import { base } from '$app/paths';
 	import Login from '$lib/components/Login.svelte';
 	import Signup from '$lib/components/Signup.svelte';
-	import UserDashboard from '$lib/components/UserDashboard.svelte';
 	import { user } from '$lib/stores/userStore';
 	import { onMount, onDestroy } from 'svelte';
 	import { _, locale } from '$lib/i18n';
@@ -21,8 +20,6 @@
 	/** @type {any} */
 	let config = $state(null);
 	let authMode = $state('login');
-	/** @type {'overview' | 'dashboard' | 'news'} */
-	let currentTab = $state('overview');
 
 	/** @type {any} */
 	let profileData = $state(null);
@@ -327,58 +324,23 @@
 					{/each}
 				</div>
 
-				<div class="portal-tabs" role="tablist" aria-label="Portal sections">
-					<button type="button" class:active={currentTab === 'overview'} onclick={() => (currentTab = 'overview')}>
-						Overview
-					</button>
-					<button type="button" class:active={currentTab === 'dashboard'} onclick={() => (currentTab = 'dashboard')}>
-						Dashboard
-					</button>
-					<button type="button" class:active={currentTab === 'news'} onclick={() => (currentTab = 'news')}>News</button>
+				<div class="overview-grid">
+					<div class="portal-card large">
+						<div class="label">AI Seminary Engine</div>
+						<h2>神學教育 × AI 學習引擎</h2>
+						<p>
+							每位教師可以建立課程專屬助手，連接教材與知識庫；每位學員可以在受控資料範圍內追問、查證、回看學習歷程。
+						</p>
+					</div>
+					<div class="portal-card">
+						<div class="metric">24/7</div>
+						<p>AI 神學助教與課程答疑</p>
+					</div>
+					<div class="portal-card">
+						<div class="metric">LTI</div>
+						<p>Moodle / Canvas / LMS 教學集成</p>
+					</div>
 				</div>
-
-				{#if currentTab === 'overview'}
-					<div class="overview-grid">
-						<div class="portal-card large">
-							<div class="label">AI Seminary Engine</div>
-							<h2>神學教育 × AI 學習引擎</h2>
-							<p>
-								每位教師可以建立課程專屬助手，連接教材與知識庫；每位學員可以在受控資料範圍內追問、查證、回看學習歷程。
-							</p>
-						</div>
-						<div class="portal-card">
-							<div class="metric">24/7</div>
-							<p>AI 神學助教與課程答疑</p>
-						</div>
-						<div class="portal-card">
-							<div class="metric">LTI</div>
-							<p>Moodle / Canvas / LMS 教學集成</p>
-						</div>
-					</div>
-				{:else if currentTab === 'dashboard'}
-					<div class="dashboard-wrap">
-						<UserDashboard
-							profile={profileData}
-							isLoading={isLoadingProfile}
-							error={profileError}
-							onRetry={loadProfile}
-						/>
-					</div>
-				{:else}
-					<div class="portal-card news-card">
-						<div class="label">Help & News</div>
-						<h2>{$_('home.help.title', { default: 'Help & News' })}</h2>
-						{#if isLoadingNews}
-							<p class="muted">{$_('home.help.loadingNews', { default: 'Loading news...' })}</p>
-						{:else if newsContent}
-							<div class="prose portal-prose max-w-none">
-								{@html newsContent}
-							</div>
-						{:else}
-							<p class="muted">{$_('home.help.noNews', { default: 'No news to display.' })}</p>
-						{/if}
-					</div>
-				{/if}
 			</div>
 		</section>
 	{:else}
@@ -616,6 +578,20 @@
 				<a href="{base}/knowledgebases">Knowledge Bases</a>
 				<a href="{base}/agent">Agent Studio</a>
 			</div>
+			{#if $user.isLoggedIn}
+				<div class="footer-news">
+					<div class="label">News</div>
+					{#if isLoadingNews}
+						<p>{$_('home.help.loadingNews', { default: 'Loading news...' })}</p>
+					{:else if newsContent}
+						<div class="footer-prose">
+							{@html newsContent}
+						</div>
+					{:else}
+						<p>{$_('home.help.noNews', { default: 'No news to display.' })}</p>
+					{/if}
+				</div>
+			{/if}
 		</div>
 	</footer>
 </div>
@@ -926,8 +902,7 @@
 	.feature-card p,
 	.system-card p,
 	.course-card p,
-	.lead,
-	.muted {
+	.lead {
 		color: var(--muted);
 		line-height: 1.75;
 	}
@@ -1430,55 +1405,15 @@
 		font-size: 22px;
 	}
 
-	.portal-tabs {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 10px;
-		margin: 34px 0 24px;
-		border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-	}
-
-	.portal-tabs button {
-		padding: 12px 18px;
-		color: var(--muted);
-		border: 1px solid transparent;
-		border-bottom: 0;
-		font-weight: 800;
-	}
-
-	.portal-tabs button.active {
-		color: var(--void);
-		background: var(--gold);
-		border-color: var(--gold);
-	}
-
 	.overview-grid {
 		display: grid;
 		grid-template-columns: 2fr 1fr 1fr;
 		gap: 20px;
+		margin-top: 34px;
 	}
 
 	.portal-card.large {
 		grid-row: span 2;
-	}
-
-	.news-card {
-		min-height: 260px;
-	}
-
-	.dashboard-wrap {
-		background: #f8fafc;
-		color: #111827;
-		border-radius: 0;
-		padding: clamp(18px, 3vw, 32px);
-	}
-
-	.portal-prose {
-		color: var(--ivory);
-	}
-
-	.portal-prose :global(a) {
-		color: var(--gold);
 	}
 
 	.seminary-footer {
@@ -1491,9 +1426,9 @@
 
 	.footer-inner {
 		display: grid;
-		grid-template-columns: minmax(220px, 1.2fr) minmax(180px, auto) minmax(260px, 1fr);
+		grid-template-columns: minmax(220px, 1.1fr) minmax(170px, auto) minmax(230px, 0.8fr) minmax(220px, 0.9fr);
 		gap: 24px;
-		align-items: center;
+		align-items: start;
 	}
 
 	.footer-brand {
@@ -1544,6 +1479,40 @@
 		color: var(--gold);
 	}
 
+	.footer-news {
+		justify-self: end;
+		width: min(280px, 100%);
+		border-left: 1px solid rgba(212, 175, 55, 0.18);
+		padding-left: 18px;
+	}
+
+	.footer-news .label {
+		margin-bottom: 8px;
+		font-size: 10px;
+		letter-spacing: 0.18em;
+	}
+
+	.footer-news p,
+	.footer-prose {
+		margin: 0;
+		color: var(--dim);
+		font-size: 12px;
+		line-height: 1.55;
+	}
+
+	.footer-prose {
+		max-height: 5rem;
+		overflow: hidden;
+	}
+
+	.footer-prose :global(*) {
+		margin: 0 0 6px;
+	}
+
+	.footer-prose :global(a) {
+		color: var(--muted);
+	}
+
 	@media (max-width: 980px) {
 		.public-layout,
 		.authed-heading,
@@ -1562,6 +1531,14 @@
 
 		.footer-links {
 			justify-content: flex-start;
+		}
+
+		.footer-news {
+			justify-self: start;
+			border-left: 0;
+			border-top: 1px solid rgba(212, 175, 55, 0.18);
+			padding-top: 16px;
+			padding-left: 0;
 		}
 
 		.auth-panel {
